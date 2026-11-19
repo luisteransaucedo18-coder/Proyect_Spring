@@ -1,16 +1,12 @@
-import { HttpClient, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { catchError, tap, throwError } from 'rxjs';
+import { catchError, throwError } from 'rxjs';
 
-interface LoginResponse {
+interface Session {
   accessToken: string;
-  expiresIn: number;
   username: string;
   roles: string[];
-}
-
-interface Session extends Omit<LoginResponse, 'expiresIn'> {
   expiresAt: number;
 }
 
@@ -18,23 +14,15 @@ const SESSION_KEY = 'panda-catalogo.session';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly http = inject(HttpClient);
+  private expired = false;
+  private redirecting = false;
   private readonly current = signal<Session | null>(this.restore());
   readonly session = this.current.asReadonly();
-
-  login(username: string, password: string) {
-    return this.http.post<LoginResponse>('/api/auth/login', { username, password }).pipe(
-      tap(({ accessToken, expiresIn, username, roles }) => {
-        const session = { accessToken, expiresAt: Date.now() + expiresIn * 1000, username, roles };
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-        this.current.set(session);
-      }),
-    );
-  }
 
   activeSession() {
     const session = this.current();
     if (session && session.expiresAt <= Date.now()) {
+      this.expired = true;
       this.logout();
       return null;
     }
@@ -46,14 +34,25 @@ export class AuthService {
     sessionStorage.removeItem(SESSION_KEY);
   }
 
+  redirectToLogin(params: Record<string, string>) {
+    if (this.redirecting) return;
+    this.redirecting = true;
+    const query = new URLSearchParams(params);
+    if (this.expired && !query.has('logout')) query.set('motivo', 'sesion');
+    window.location.replace('/login?' + query.toString());
+  }
+
   private restore(): Session | null {
     try {
       const stored = sessionStorage.getItem(SESSION_KEY);
       if (!stored) return null;
       const data = JSON.parse(stored);
       if (typeof data?.accessToken === 'string' && typeof data.username === 'string'
-          && typeof data.expiresAt === 'number' && Array.isArray(data.roles)
-          && data.expiresAt > Date.now()) return data;
+          && Number.isFinite(data.expiresAt) && Array.isArray(data.roles)
+          && data.roles.every((role: unknown) => typeof role === 'string')) {
+        if (data.expiresAt > Date.now()) return data;
+        this.expired = true;
+      }
     } catch {
       // An invalid stored session can be discarded.
     }
@@ -62,9 +61,12 @@ export class AuthService {
   }
 }
 
-export const signedIn: CanActivateFn = (_, state) => inject(AuthService).activeSession()
-  ? true
-  : inject(Router).createUrlTree(['/acceso'], { queryParams: { volver: state.url } });
+export const signedIn: CanActivateFn = (_, state) => {
+  const auth = inject(AuthService);
+  if (auth.activeSession()) return true;
+  auth.redirectToLogin({ volver: state.url });
+  return false;
+};
 
 export const administrator: CanActivateFn = () => inject(AuthService).activeSession()?.roles.includes('ROLE_ADMIN')
   ? true
@@ -78,10 +80,9 @@ export const apiAuthInterceptor: HttpInterceptorFn = (request, next) => {
   const session = auth.activeSession();
   return next(session ? request.clone({ setHeaders: { Authorization: 'Bearer ' + session.accessToken } }) : request).pipe(
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && error.status === 401 && auth.session() === session
-          && !router.url.startsWith('/acceso')) {
+      if (error instanceof HttpErrorResponse && error.status === 401 && auth.session() === session) {
         auth.logout();
-        void router.navigate(['/acceso'], { queryParams: { motivo: 'sesion', volver: router.url } });
+        auth.redirectToLogin({ motivo: 'sesion', volver: router.url });
       }
       return throwError(() => error);
     }),

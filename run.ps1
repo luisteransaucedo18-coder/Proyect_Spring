@@ -1,6 +1,15 @@
 $ErrorActionPreference = 'Stop'
 
-# Selecciona el proyecto aunque la terminal esté en otra carpeta.
-$projectPom = Join-Path $PSScriptRoot 'pom.xml'
-& mvn -f $projectPom spring-boot:run @args
-exit $LASTEXITCODE
+Push-Location -LiteralPath $PSScriptRoot
+try {
+    & node scripts/package-demo.mjs
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    & java -jar target/spring_bobba-0.0.1-SNAPSHOT.jar --spring.profiles.active=demo @args
+    exit $LASTEXITCODE
+}
+finally {
+    Pop-Location
+}

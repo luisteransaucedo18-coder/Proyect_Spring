@@ -1,17 +1,19 @@
 # Panda Bobba
 
-Panda Bobba permite consultar el catálogo de bebidas y administrar sus fichas. Angular ofrece la experiencia de gestión, Spring Boot aplica permisos y validaciones en la API REST, y JPA guarda los cambios en la base de datos. El sitio público y el panel Thymeleaf del avance anterior siguen disponibles.
+Panda Bobba permite consultar el catálogo de bebidas y administrar sus fichas. Angular ofrece el panel de gestión, Spring Boot aplica permisos y validaciones en la API REST, y JPA guarda los cambios en la base de datos.
 
 ## Demostración local
 
-Para construir el JAR necesitas un JDK 17 o superior, Maven 3.9 y Node.js 24 con npm disponibles en la terminal. Desde la carpeta `Proyect_Spring` ejecuta:
+Para construir el JAR necesitas un JDK 17 o superior, Maven 3.9 y Node.js 24 con npm disponibles en la terminal. En PowerShell, desde `Proyect_Spring`, ejecuta `.\run.ps1` para compilar e iniciar el proyecto. También puedes ejecutar los pasos por separado.
+
+Si tienes una instancia abierta, detenla con `Ctrl+C` en su terminal antes de volver a compilar.
 
 ```sh
 node scripts/package-demo.mjs
 java -jar target/spring_bobba-0.0.1-SNAPSHOT.jar --spring.profiles.active=demo
 ```
 
-Abre [el catálogo Angular](http://127.0.0.1:8080/gestion-catalogo/) y elige una cuenta de demostración.
+Abre la [pantalla de inicio de sesión](http://127.0.0.1:8080/login) y elige una cuenta de demostración. Al ingresar se abre directamente el panel Angular.
 
 | Cuenta | Contraseña local | Permisos |
 |---|---|---|
@@ -20,11 +22,11 @@ Abre [el catálogo Angular](http://127.0.0.1:8080/gestion-catalogo/) y elige una
 
 El perfil `demo` escucha en `127.0.0.1` y guarda la base H2 en `.data/panda-bobba.mv.db`. Reinicia el mismo JAR desde la misma carpeta para volver a abrir la base. Puedes aislar otra ejecución con `PANDA_DEMO_DB_PATH` (ruta sin extensión). Si el puerto 8080 está ocupado, añade `--server.port=8089` al comando de Java.
 
-El catálogo público está en [Inicio](http://127.0.0.1:8080/) y el panel anterior en [Panel Thymeleaf](http://127.0.0.1:8080/panel).
+El botón **Iniciar sesión** del [sitio público](http://127.0.0.1:8080/) lleva a `/login`. Los enlaces anteriores `/panel` y `/gestion` abren el catálogo Angular y solicitan iniciar sesión cuando es necesario.
 
 ## Desarrollo
 
-Ejecuta el backend con `mvn spring-boot:run "-Dspring-boot.run.profiles=demo"`. En otra terminal, entra a `frontend/` y ejecuta `npm ci` y `npm start`. El proxy de Angular envía `/api/` y `/images/` a Spring Boot en el puerto 8080.
+Ejecuta el backend con `mvn spring-boot:run "-Dspring-boot.run.profiles=demo"`. En otra terminal, entra a `frontend/` y ejecuta `npm ci` y `npm start`. Abre [Angular en desarrollo](http://localhost:4200/gestion-catalogo/). El proxy envía el acceso, sus recursos y la API a Spring Boot en el puerto 8080.
 
 - `mvn -B test` ejecuta las pruebas de integración con H2 en memoria.
 - `npm run build` dentro de `frontend/` genera una compilación de producción de Angular.

@@ -96,12 +96,7 @@ h3 { font-size: 1.1rem; line-height: 1.25; }
 .empty p + .button, .empty h1 + p, .empty h3 + p { margin-top: 0.8rem; }
 .narrow { max-width: 36rem; margin-inline: auto; }
 
-.login-layout { display: grid; grid-template-columns: 1fr 1fr; max-width: 53rem; margin-inline: auto; overflow: hidden; }
-.login-photo { background: #dfe8d9 url('/images/login-side.jpg') center / cover; min-height: 9.5rem; }
-.login-body { padding: clamp(1.4rem, 4vw, 3rem); }
-.login-body > p:not(.eyebrow, .notice), .editor-heading > p:not(.eyebrow) { margin-top: 0.65rem; color: var(--muted); }
-.login-body form { margin-top: 1.4rem; }
-.login-body form > .button { width: 100%; margin-top: 0.35rem; }
+.editor-heading > p:not(.eyebrow) { margin-top: 0.65rem; color: var(--muted); }
 .field { display: grid; gap: 0.3rem; margin-bottom: 0.95rem; min-width: 0; }
 label { font-size: 0.86rem; font-weight: 700; }
 input, select, textarea { width: 100%; min-height: 2.65rem; padding: 0.55rem 0.7rem; border: 1px solid #aabaae; border-radius: 0.55rem; background: #fff; color: var(--ink); }
@@ -129,8 +124,7 @@ dialog .actions { justify-content: flex-end; }
 @media (max-width: 44rem) {
   .shell { width: calc(100% - 1.5rem); }
   .hero { background-position: center, 61% center; background-image: linear-gradient(90deg, #113729 0%, #113729b0 100%), url('/images/login-side.jpg'); }
-  .login-layout, .detail { grid-template-columns: 1fr; }
-  .login-photo { background-position: center 44%; }
+  .detail { grid-template-columns: 1fr; }
   .detail-photo img { height: 15rem; }
   .filters .field:nth-child(2) { flex: 1 1 10rem; }
 }

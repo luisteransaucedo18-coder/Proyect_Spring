@@ -1,4 +1,11 @@
 {
+  "^/$": {"target": "http://127.0.0.1:8080"},
   "/api/**": {"target": "http://127.0.0.1:8080"},
-  "/images/**": {"target": "http://127.0.0.1:8080"}
+  "/images/**": {"target": "http://127.0.0.1:8080"},
+  "/inicio": {"target": "http://127.0.0.1:8080"},
+  "/login": {"target": "http://127.0.0.1:8080"},
+  "/productos": {"target": "http://127.0.0.1:8080"},
+  "/nosotros": {"target": "http://127.0.0.1:8080"},
+  "/css/**": {"target": "http://127.0.0.1:8080"},
+  "/js/**": {"target": "http://127.0.0.1:8080"}
 }

@@ -1,5 +1,6 @@
 package com.panda_bobba.spring_bobba;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +109,7 @@ class AvanceDosIntegrationTests {
         mvc.perform(get("/gestion-catalogo"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/gestion-catalogo/"));
-        for (var ruta : List.of("/", "/acceso", "/productos", "/productos/nuevo",
+        for (var ruta : List.of("/", "/productos", "/productos/nuevo",
                 "/productos/42", "/productos/42/editar", "/sin-permiso")) {
             mvc.perform(get("/gestion-catalogo" + ruta))
                 .andExpect(status().isOk())
@@ -116,10 +117,33 @@ class AvanceDosIntegrationTests {
         }
     }
 
-    @Test void pantallaDeGestionDisponible() throws Exception {
-        mvc.perform(get("/gestion")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/panel"));
-        mvc.perform(get("/panel")).andExpect(status().isOk()).andExpect(view().name("gestion"));
-        mvc.perform(get("/login")).andExpect(status().isOk()).andExpect(view().name("login"));
+    @Test void entradasAnterioresLlevanAlUnicoPanelAngular() throws Exception {
+        var rutas = Map.of(
+                "/gestion", "/productos",
+                "/panel", "/productos",
+                "/admin/productos", "/productos",
+                "/admin/productos/nuevo", "/productos/nuevo",
+                "/admin/productos/42", "/productos/42",
+                "/admin/productos/editar/42", "/productos/42/editar",
+                "/admin/productos/42/editar", "/productos/42/editar",
+                "/access-denied", "/sin-permiso");
+        for (var ruta : rutas.entrySet()) {
+            mvc.perform(get(ruta.getKey())).andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/gestion-catalogo" + ruta.getValue()));
+        }
+
+        var login = mvc.perform(get("/login")).andExpect(status().isOk()).andExpect(view().name("login"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(login).contains("class=\"login-container\"", "id=\"tituloSesion\"", "src=\"/js/login-panel.js\"");
+        mvc.perform(get("/gestion-catalogo/acceso")).andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+        mvc.perform(get(URI.create("/gestion-catalogo/acceso?volver=%2Fproductos%2F42&motivo=sesion")))
+                .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login?volver=%2Fproductos%2F42&motivo=sesion"));
+
+        mvc.perform(post("/login").param("username", "admin").param("password", "admin123"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/admin/productos/nuevo")).andExpect(status().isForbidden());
+
         for (var ruta : List.of("/inicio", "/productos", "/nosotros")) {
             var html = mvc.perform(get(ruta)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
             assertThat(html).contains("public-login-button", "href=\"/login\"");

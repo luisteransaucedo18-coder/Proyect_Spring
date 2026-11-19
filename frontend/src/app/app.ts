@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './auth';
 
 @Component({
@@ -27,12 +27,11 @@ import { AuthService } from './auth';
 })
 export class App {
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
   readonly session = this.auth.session;
   readonly role = computed(() => this.session()?.roles.includes('ROLE_ADMIN') ? 'Administrador' : 'Operador');
 
   logout() {
     this.auth.logout();
-    void this.router.navigate(['/acceso']);
+    this.auth.redirectToLogin({ logout: '1' });
   }
 }

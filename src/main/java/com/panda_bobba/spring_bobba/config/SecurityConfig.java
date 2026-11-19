@@ -1,54 +1,37 @@
 package com.panda_bobba.spring_bobba.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import com.panda_bobba.spring_bobba.services.CustomUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
+    private static final String[] RUTAS_PUBLICAS = {
+        "/", "/inicio", "/productos", "/nosotros",
+        "/css/**", "/js/**", "/images/**",
+        "/gestion-catalogo", "/gestion-catalogo/**", "/actuator/health",
+        "/login", "/panel", "/gestion", "/admin/productos", "/admin/productos/**", "/access-denied"
+    };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .requestCache(cache -> cache.disable())
+            .logout(logout -> logout.disable())
             .authorizeHttpRequests(authorize -> authorize
-                // Rutas públicas
-                .requestMatchers("/", "/inicio", "/productos", "/nosotros").permitAll()
-                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/gestion-catalogo", "/gestion-catalogo/**", "/actuator/health").permitAll()
-                .requestMatchers("/login", "/error").permitAll()
-                .requestMatchers("/panel", "/gestion", "/access-denied").permitAll()
-                
-                // Rutas administrativas solo para ROLE_ADMIN
-                .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-                
-                // Cualquier otra ruta requiere autenticación
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .defaultSuccessUrl("/panel", true)
-                .failureUrl("/login?error=true")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
-                .permitAll()
-            )
-            .exceptionHandling(exception -> exception
-                .accessDeniedPage("/access-denied")
-            );
+                .requestMatchers("/error").permitAll()
+                .requestMatchers(HttpMethod.GET, RUTAS_PUBLICAS).permitAll()
+                .requestMatchers(HttpMethod.HEAD, RUTAS_PUBLICAS).permitAll()
+                .anyRequest().denyAll());
 
         return http.build();
     }

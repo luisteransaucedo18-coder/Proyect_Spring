@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { administrator, signedIn } from './auth';
 
 export const routes: Routes = [
-  { path: 'acceso', title: 'Iniciar sesión | Panda Bobba', loadComponent: () => import('./login').then(m => m.Login) },
   { path: 'sin-permiso', title: 'Acceso restringido | Panda Bobba', canActivate: [signedIn], loadComponent: () => import('./denied').then(m => m.Denied) },
   { path: 'productos', title: 'Catálogo | Panda Bobba', canActivate: [signedIn], loadComponent: () => import('./catalog').then(m => m.Catalog) },
   { path: 'productos/nuevo', title: 'Nuevo producto | Panda Bobba', canActivate: [signedIn, administrator], loadComponent: () => import('./editor').then(m => m.Editor) },
